@@ -32,7 +32,17 @@ app.get("/", (request, response) => {
   response.send("You are connected")
 })
 
+
 //CRUD
+// READ: All items
+app.get("/items", async (request, response) => {
+  const items = await Item.find()
+  response.status(200).json({
+    success: true,
+    items
+  })
+})
+
 //CREATE: An Item
 app.post("/items/create", async(request, response) => {
   if (!request.body){
@@ -64,93 +74,70 @@ app.post("/items/create", async(request, response) => {
   })
 })
 
-//READ: All products
-// app.get("/all-products", async (request, response) => {
-//   const allProducts = await Product.find()
-//   response.status(200).json({
-//     success: true,
-//     allProducts
-//   })
-// })
+// READ: All unclaimed items
+app.get("/items/unclaimed", async (request, response) => {
+  const unclaimedItems = await Item.find().where({claimed: false})
+  response.status(200).json({
+    success: true,
+    unclaimedItems
+  })
+})
 
-//READ: A single product
-// app.get("/one-product/:id", async (request, response) => {
-//   // if(!request.params || !request.params.id){
-//   //   return response.status(400).json({
-//   //     success: false,
-//   //     message: "Missing request params or parameters"
-//   //   })
-//   // }
-//   const {id} = request.params
-//   const filteredProduct = await Product.findById(id)
-//   if (!filteredProduct){
-//     return response.status(404).json({
-//       success: false,
-//       message: `No product with id: ${id} found`
-//     })
-//   }
+//READ: View one item by ID
+app.get("/items/:id", async (request, response) => {
+  const {id} = request.params
+  const filteredItem = await Item.findById(id)
+  if (!filteredItem){
+    return response.status(404).json({
+      success: false,
+      message: `No item with id: ${id} found`
+    })
+  }
 
-//   return response.status(200).json({
-//     success: true,
-//     filteredProduct
-//   })
-// })
-
-//UPDATE: PUT
-// app.put("/full-edit-product/:id", async (request, response) => {
-//   const {id} = request.params
-//   const {name, price, quantity} = request.body
-
-//   const filteredProduct = await Product.findByIdAndUpdate(
-//     id,
-//     {name, price, quantity},
-//     {new: true}
-//   )
-//   response.status(201).json({
-//     success: true,
-//     message: 'Product fully updated',
-//     filteredProduct
-//   })
-
-// })
-
-//UPDATE: PATCH
-// app.patch("/part-edit-product/:id", async (request, response) => {
-//   const {id} = request.params
-//   //Update only name
-//   const {name} = request.body
-
-//   const filteredProduct = await Product.findById(id)
-//   if(filteredProduct){
-//     filteredProduct.name = name
-//     await filteredProduct.save()
-//     return response.status(201).json({
-//       success: true,
-//       message: 'Product partly updated',
-//       filteredProduct
-//     })
-//   }
-//   return response.status(404).json({
-//     success: false,
-//     message: `product with id: ${id} was not found`
-//   })
-
-// })
+  return response.status(200).json({
+    success: true,
+    filteredItem
+  })
+})
 
 
-//DELETE
-// app.delete("/delete-product/:id", async (request, response) => {
-//   const {id} = request.params
-//   const filteredProduct = await Product.findByIdAndDelete(id)
-//   if(filteredProduct){
-//     return response.status(200).json({
-//       success: true,
-//       message: 'Product deleted',
-//     })
-//   }
-//   return response.status(200).json({
-//     success: true,
-//     message: 'Product delete failed or product not found',
-//   })
-// })
+// UPDATE: item’s status as claimed
+app.patch("/items/update/:id", async (request, response) => {
+  const {id} = request.params
+  //Update only claimed status
+  const {claimed} = request.body
+
+  const filteredItem = await Item.findById(id)
+  if(filteredItem){
+    filteredItem.claimed = claimed
+    await filteredItem.save()
+    return response.status(201).json({
+      success: true,
+      message: `Item partly updated`,
+      filteredItem
+    })
+  }
+  return response.status(404).json({
+    success: false,
+    message: `item with id: ${id} was not found`
+  })
+
+})
+
+
+//DELETE: Any item entry
+app.delete("/items/delete/:id", async (request, response) => {
+  const {id} = request.params
+  const filteredItem = await Item.findByIdAndDelete(id)
+  if(filteredItem){
+    return response.status(200).json({
+      success: true,
+      message: 'Item deleted',
+    })
+  }
+  return response.status(404).json({
+    success: false,
+    message: 'Item delete failed or item not found',
+  })
+})
 
